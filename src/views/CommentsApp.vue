@@ -4,7 +4,7 @@
       <div class="max-w-screen-xl mx-auto bg-white p-8 rounded-lg shadow-2xl">
         <h2 class="text-3xl my-6">评论</h2>
         <!--评论form-->
-        <CommentBox />
+        <CommentBox @submit="addNewComment" />
         <!--分隔线-->
         <DividerHorizontal />
         <!--单个留言-->
@@ -16,7 +16,7 @@
             :time="item.time"
           >
             <!--回复列表-->
-            <ReplyBox>
+            <ReplyContainer>
               <div v-for="reply in item.replies" :key="reply.id">
                 <CommentItem
                   :user="reply.user"
@@ -25,7 +25,9 @@
                   :time="reply.time"
                 />
               </div>
-            </ReplyBox>
+            </ReplyContainer>
+            <!--回复按钮-->
+            <ReplyBox @submit="addNewReply($event, item.id)" />
           </CommentItem>
         </div>
       </div>
@@ -38,8 +40,11 @@ import CommentBox from '../components/CommentBox.vue';
 import CommentItem from '../components/CommentItem.vue';
 import DividerHorizontal from '../components/DividerHorizontal.vue';
 import ReplyBox from '../components/ReplyBox.vue';
+import ReplyContainer from '../components/ReplyContainer.vue';
+import { ref } from 'vue';
 
-const comments = [
+
+const comments = ref([
   {
     id: 1,
     user: "梦落轻寻",
@@ -65,7 +70,38 @@ const comments = [
       },
     ],
   },
-]
+])
+let rid = ref(4)
+
+
+const constructNewComment = (content) => {
+  return {
+    id: rid.value++,
+    user: "BlankZro",
+    avatar: "../src/assets/image/R-C.jpg",
+    time: "1秒前",
+    content,
+  }
+}
+const handleShowCommentBox = (value) => {
+  showCommentBox.value = value
+}
+
+const addNewComment = (content) => {
+  const newComment = constructNewComment(content)
+  comments.value.push(newComment)
+}
+
+const addNewReply = (content, id) => {
+  console.log(content)
+  const reply = constructNewComment(content)
+  let currComment = comments.value.find(item => item.id == id)
+  if (currComment.replies) {
+    currComment.replies.push(reply)
+  } else {
+    currComment.replies = [reply]
+  }
+}
 </script>
 
 <style>

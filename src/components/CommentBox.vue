@@ -1,5 +1,5 @@
 <template>
-  <form action="" class="grid">
+  <form action="" class="grid" @submit="handleSubmit">
     <textarea
       name="comment"
       id=""
@@ -24,8 +24,16 @@
 </template>
 
 <script setup>
-import ref from 'vue';
+import { ref } from 'vue';
+
 const content = ref("")
+const emit = defineEmits(["submit"])
+
+const handleSubmit = (e) => {
+  e.preventDefault();
+  emit("submit", content.value)
+  content.value = ""
+}
 </script>
 
 <style>

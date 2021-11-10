@@ -1,5 +1,5 @@
 <template>
-  <comments-app />
+  <CommentsApp/>
 </template>
 
 <script setup>
