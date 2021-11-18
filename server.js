@@ -8,10 +8,6 @@ require("dotenv").config();
 
 const app = new Koa()
 
-const { Client } = require("@notionhq/client")
-require("dotenv").config();
-
-
 //使用中间件
 app.use(jsonp())//json数据
 app.use(bodyparser())//获取请求体数据，要支持文件上传，可以使用better-body-parser这个包
