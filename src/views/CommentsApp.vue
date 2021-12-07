@@ -60,6 +60,7 @@ const handleShowCommentBox = (value) => {
 
 //评论/回复（replyTo有值）
 const addNewComment = async (content, replyTo) => {
+  if (!content) return;
   const res = await axios.post("/api/comments", {
     content,
     ...(replyTo && { replyTo }), //使用解构replyTo有值则传参，无则不传
