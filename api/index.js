@@ -20,21 +20,14 @@ const NOTION_CURR_USER_ID = process.env.NOTION_CURR_USER_ID
 const notion = new Client({ auth: NOTION_TOKEN })
 
 
-router.get("/comments", async (ctx, next) => {
+router.get("/api/comments", async (ctx, next) => {
     //获取列表数据
     const result = await notion.databases.query({ database_id: NOTION_DB_ID })
+
     const comments = new Map()
     //解构数据
     result?.results?.forEach(item => {
-        comments.set(item.id, {
-            id: item.id,
-            user: item.properties.user.rich_text[0].text.content,
-            content: item.properties.content.rich_text[0].text.content,
-            time: formatTimeDesc(item.properties.time.created_time),
-            avatar: item.properties.avatar.files[0].file.url,
-            replies: item.properties.replies.relation,
-            replyTo: item.properties.replyTo?.relation[0]?.id
-        })
+        comments.set(item.id, transformPageObject(item))
     })
 
     //重新组装，把关系ID替换为真实数据
@@ -45,10 +38,24 @@ router.get("/comments", async (ctx, next) => {
         }
         return acc
     }, [])
-
-    ctx.body = result
-    return commentsPopulated
+    ctx.body = commentsPopulated
+    // ctx.body = result
 })
+
+//评论/回复
+router.post("/api/comments", async (ctx, next) => {
+    ctx.response.type = 'application/json';
+    console.log(ctx.request.body)
+    try {
+        const data = await addComment(ctx.request.body);
+        ctx.response.status = 201
+        ctx.body = JSON.stringify(transformPageObject(data))//转换结构返回给页面，减少请求数
+    } catch (error) {
+        console.log(error);
+        ctx.response.status = 500
+    }
+})
+
 
 //格式化时间描述
 function formatTimeDesc (time) {
@@ -76,6 +83,18 @@ function formatTimeDesc (time) {
         return `${Math.ceil(relativeTime / yearInMs)}年前`
     }
 }
+//转换对象
+function transformPageObject (item) {
+    return {
+        id: item.id,
+        user: item.properties.user.rich_text[0].text.content,
+        content: item.properties.content.rich_text[0].text.content,
+        time: formatTimeDesc(item.properties.time.created_time),
+        avatar: item.properties.avatar.url,
+        replies: item.properties.replies.relation,
+        replyTo: item.properties.replyTo?.relation[0]?.id
+    };
+}
 
 //添加函数
 async function addComment ({ content, replyTo = "" }) {
@@ -83,14 +102,14 @@ async function addComment ({ content, replyTo = "" }) {
     let { avatar_url, name } = await notion.users.retrieve({
         user_id: NOTION_CURR_USER_ID,
     });
-
-    notion.request({
+    //传值结构，对应赋值
+    const commnets = await notion.request({
         method: "POST",
         path: "pages",
         body: {
             parent: { database_id: NOTION_DB_ID },
             properties: {
-                no: {
+                id: {
                     title: [
                         {
                             text: {
@@ -109,13 +128,13 @@ async function addComment ({ content, replyTo = "" }) {
                     ],
                 },
                 avatar: {
-                    url: avatar_url,
+                    url: avatar_url
                 },
                 content: {
                     rich_text: [
                         {
                             text: {
-                                content,
+                                content: content,
                             },
                         },
                     ],
@@ -133,32 +152,11 @@ async function addComment ({ content, replyTo = "" }) {
             },
         },
     });
+    return commnets
 }
 
-function transformPageObject (page) {
-    return {
-        id: page.id,
-        user: page.properties.user.rich_text[0].text.content,
-        time: getRelativeTimeDesc(page.properties.time.created_time),
-        content: page.properties.content.rich_text[0].text.content,
-        avatar: page.properties.avatar.url,
-        replies: page.properties.replies.relation,
-        replyTo: page.properties.replyTo?.relation[0]?.id,
-    };
-}
-
-router.post("/comments", async (ctx, next) => {
-    ctx.response.type = 'application/json';
-    console.log(ctx.request.body)
-    try {
-        await addComment(ctx.request.body);
-        ctx.response.status = 201
-    } catch (error) {
-        console.log(error);
-        ctx.response.status = 500
-    }
-})
 
 app.use(router.routes())
 
-app.listen(3001)
+// app.listen(3001)
+module.exports = app;

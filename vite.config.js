@@ -4,10 +4,11 @@ import vue from '@vitejs/plugin-vue';
 export default defineConfig({
     plugins: [vue()],
     server: {
+        open: true,
         //配置跨域请求
         proxy: {
             "/api": {
-                target: "http://loaclhost:3001",
+                target: "http://localhost:3001",
                 changeOrigin: true,
                 rewrite: (path) => path.replace(/^\/api/, "")
             }

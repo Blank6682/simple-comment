@@ -10,7 +10,7 @@
       </div>
       <div class="my-auto">...</div>
     </div>
-    <p class="text-sm text-gray-700 my-4">
+    <p class="my-4 text-sm text-gray-700">
       {{ content }}
     </p>
     <slot></slot>
@@ -18,7 +18,12 @@
 </template>
 
 <script setup>
-defineProps({ user: String, avatar: String, time: String, content: String })
+const props = defineProps({
+  user: String,
+  avatar: String,
+  time: String,
+  content: String,
+});
 </script>
 
 <style>
